@@ -9,6 +9,7 @@ import Collection from './views/Collection.vue'
 Vue.use(Router)
 
 export default new Router({
+  mode: 'history',
   routes: [
     {
       path: '/',
@@ -23,17 +24,23 @@ export default new Router({
     {
       path: '/detail/:id',
       name: 'detail',
-      component: Detail
+      component: Detail,
+      props: true
     },
     {
       path: '/search',
       name: 'search',
-      component: Search
+      component: Search,
+      props: (route) => ({ query: route.query.q })
     },
     {
       path: '/collection',
       name: 'collection',
       component: Collection
+    },
+    {
+      path: '*',
+      redirect: '/'
     }
   ]
 })

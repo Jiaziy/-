@@ -189,29 +189,10 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import { ref } from 'vue';
 
-interface Dynasty {
-  name: string;
-  image: string;
-}
-
-interface Author {
-  name: string;
-  dynasty: string;
-  avatar: string;
-}
-
-interface Poem {
-  title: string;
-  author: string;
-  dynasty: string;
-  excerpt: string;
-  authorAvatar: string;
-}
-
-const dynasties = ref<Dynasty[]>([
+const dynasties = ref([
   {
     name: "先秦",
     image: "https://ai-public.mastergo.com/ai/img_res/6732a6b4fb7285204c7878fc5364fcd0.jpg"
@@ -238,7 +219,7 @@ const dynasties = ref<Dynasty[]>([
   }
 ]);
 
-const authors = ref<Author[]>([
+const authors = ref([
   {
     name: "李白",
     dynasty: "唐朝",
@@ -271,7 +252,7 @@ const authors = ref<Author[]>([
   }
 ]);
 
-const featuredPoems = ref<Poem[]>([
+const featuredPoems = ref([
   {
     title: "静夜思",
     author: "李白",
@@ -316,11 +297,11 @@ const featuredPoems = ref<Poem[]>([
   }
 ]);
 
-const navigateToDynasty = (name: string) => {
+const navigateToDynasty = (name) => {
   console.log(`Navigating to dynasty: ${name}`);
 };
 
-const navigateToAuthor = (name: string) => {
+const navigateToAuthor = (name) => {
   console.log(`Navigating to author: ${name}`);
 };
 </script>

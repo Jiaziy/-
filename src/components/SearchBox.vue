@@ -32,38 +32,34 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SearchBox',
-  data() {
-    return {
-      query: '',
-      showSuggestions: false,
-      suggestions: [
-        '李白',
-        '杜甫',
-        '苏轼',
-        '唐诗三百首',
-        '宋词精选',
-        '静夜思',
-        '水调歌头'
-      ]
-    }
-  },
-  watch: {
-    query(newVal) {
-      this.showSuggestions = newVal.length > 0
-    }
-  },
-  methods: {
-    search() {
-      this.showSuggestions = false
-      this.$emit('search', this.query)
-    },
-    selectSuggestion(suggestion) {
-      this.query = suggestion
-      this.search()
-    }
-  }
+<script setup>
+import { ref, watch } from 'vue'
+
+const query = ref('')
+const showSuggestions = ref(false)
+const suggestions = ref([
+  '李白',
+  '杜甫',
+  '苏轼',
+  '唐诗三百首',
+  '宋词精选',
+  '静夜思',
+  '水调歌头'
+])
+
+const emit = defineEmits(['search'])
+
+watch(query, (newVal) => {
+  showSuggestions.value = newVal.length > 0
+})
+
+const search = () => {
+  showSuggestions.value = false
+  emit('search', query.value)
+}
+
+const selectSuggestion = (suggestion) => {
+  query.value = suggestion
+  search()
 }
 </script>

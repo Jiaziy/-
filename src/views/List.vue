@@ -127,103 +127,99 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import PoemCard from '@/components/PoemCard.vue'
 import Pagination from '@/components/Pagination.vue'
 import { getPoems } from '@/api/poems.js'
 
-export default {
-  name: 'List',
-  components: {
-    PoemCard,
-    Pagination
-  },
-  data() {
-    return {
-      poems: [],
-      total: 0,
-      perPage: 9,
-      currentPage: 1,
-      searchQuery: '',
-      selectedDynasty: '',
-      selectedAuthor: '',
-      sortBy: 'title',
-      dynasties: ['先秦', '汉朝', '魏晋', '唐朝', '宋朝', '明清'],
-      authors: ['李白', '杜甫', '苏轼', '辛弃疾', '李清照', '纳兰性德']
+const router = useRouter()
+
+const poems = ref([])
+const total = ref(0)
+const perPage = ref(9)
+const currentPage = ref(1)
+const searchQuery = ref('')
+const selectedDynasty = ref('')
+const selectedAuthor = ref('')
+const sortBy = ref('title')
+const dynasties = ref(['先秦', '汉朝', '魏晋', '唐朝', '宋朝', '明清'])
+const authors = ref(['李白', '杜甫', '苏轼', '辛弃疾', '李清照', '纳兰性德'])
+
+const filteredPoems = computed(() => {
+  let filtered = poems.value
+
+  if (selectedDynasty.value) {
+    filtered = filtered.filter(poem => poem.dynasty === selectedDynasty.value)
+  }
+
+  if (selectedAuthor.value) {
+    filtered = filtered.filter(poem => poem.author === selectedAuthor.value)
+  }
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(poem => 
+      poem.title.toLowerCase().includes(query) ||
+      poem.author.toLowerCase().includes(query) ||
+      poem.content.toLowerCase().includes(query)
+    )
+  }
+
+  // 排序
+  filtered.sort((a, b) => {
+    if (sortBy.value === 'title') {
+      return a.title.localeCompare(b.title)
+    } else if (sortBy.value === 'author') {
+      return a.author.localeCompare(b.author)
+    } else {
+      return a.dynasty.localeCompare(b.dynasty)
     }
-  },
-  computed: {
-    filteredPoems() {
-      let filtered = this.poems
+  })
 
-      if (this.selectedDynasty) {
-        filtered = filtered.filter(poem => poem.dynasty === this.selectedDynasty)
-      }
+  return filtered
+})
 
-      if (this.selectedAuthor) {
-        filtered = filtered.filter(poem => poem.author === this.selectedAuthor)
-      }
+const paginatedPoems = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value
+  const end = start + perPage.value
+  return filteredPoems.value.slice(start, end)
+})
 
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase()
-        filtered = filtered.filter(poem => 
-          poem.title.toLowerCase().includes(query) ||
-          poem.author.toLowerCase().includes(query) ||
-          poem.content.toLowerCase().includes(query)
-        )
-      }
-
-      // 排序
-      filtered.sort((a, b) => {
-        if (this.sortBy === 'title') {
-          return a.title.localeCompare(b.title)
-        } else if (this.sortBy === 'author') {
-          return a.author.localeCompare(b.author)
-        } else {
-          return a.dynasty.localeCompare(b.dynasty)
-        }
-      })
-
-      return filtered
-    },
-    paginatedPoems() {
-      const start = (this.currentPage - 1) * this.perPage
-      const end = start + this.perPage
-      return this.filteredPoems.slice(start, end)
-    }
-  },
-  created() {
-    this.fetchPoems()
-  },
-  methods: {
-    async fetchPoems() {
-      try {
-        const data = await getPoems()
-        this.poems = data.poems
-        this.total = data.total
-      } catch (error) {
-        console.error('获取诗词列表失败:', error)
-      }
-    },
-    handlePageChange(page) {
-      this.currentPage = page
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    },
-    handleSearch() {
-      this.currentPage = 1
-      if (this.searchQuery.trim()) {
-        this.$router.push(`/search?q=${encodeURIComponent(this.searchQuery)}`)
-      }
-    },
-    resetFilters() {
-      this.selectedDynasty = ''
-      this.selectedAuthor = ''
-      this.searchQuery = ''
-      this.sortBy = 'title'
-      this.currentPage = 1
-    }
+const fetchPoems = async () => {
+  try {
+    const data = await getPoems()
+    poems.value = data.poems
+    total.value = data.total
+  } catch (error) {
+    console.error('获取诗词列表失败:', error)
   }
 }
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  if (searchQuery.value.trim()) {
+    router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+  }
+}
+
+const resetFilters = () => {
+  selectedDynasty.value = ''
+  selectedAuthor.value = ''
+  searchQuery.value = ''
+  sortBy.value = 'title'
+  currentPage.value = 1
+}
+
+onMounted(() => {
+  fetchPoems()
+})
 </script>
 
 <style scoped>

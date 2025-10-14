@@ -122,52 +122,47 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import SearchBox from '@/components/SearchBox.vue'
 import PoemCard from '@/components/PoemCard.vue'
 import { searchPoems } from '@/api/poems.js'
 
-export default {
-  name: 'Search',
-  components: {
-    SearchBox,
-    PoemCard
-  },
-  data() {
-    return {
-      results: [],
-      searchQuery: '',
-      showPopular: false,
-      popularTags: ['李白', '杜甫', '苏轼', '唐诗三百首', '宋词精选', '静夜思', '水调歌头', '春望']
-    }
-  },
-  created() {
-    // 从URL参数获取搜索关键词
-    const query = this.$route.query.q
-    if (query) {
-      this.searchQuery = query
-      this.handleSearch(query)
-    }
-  },
-  methods: {
-    async handleSearch(query) {
-      this.searchQuery = query
-      if (query.trim()) {
-        this.results = await searchPoems(query)
-        this.showPopular = false
-      } else {
-        this.results = []
-      }
-    },
-    showSuggestions() {
-      this.showPopular = true
-    },
-    searchByTag(tag) {
-      this.searchQuery = tag
-      this.handleSearch(tag)
-    }
+const route = useRoute()
+
+const results = ref([])
+const searchQuery = ref('')
+const showPopular = ref(false)
+const popularTags = ref(['李白', '杜甫', '苏轼', '唐诗三百首', '宋词精选', '静夜思', '水调歌头', '春望'])
+
+const handleSearch = async (query) => {
+  searchQuery.value = query
+  if (query.trim()) {
+    results.value = await searchPoems(query)
+    showPopular.value = false
+  } else {
+    results.value = []
   }
 }
+
+const showSuggestions = () => {
+  showPopular.value = true
+}
+
+const searchByTag = (tag) => {
+  searchQuery.value = tag
+  handleSearch(tag)
+}
+
+onMounted(() => {
+  // 从URL参数获取搜索关键词
+  const query = route.query.q
+  if (query) {
+    searchQuery.value = query
+    handleSearch(query)
+  }
+})
 </script>
 
 <style scoped>

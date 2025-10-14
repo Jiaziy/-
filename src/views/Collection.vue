@@ -146,72 +146,67 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { usePoemStore } from '@/stores/poem.js'
 import PoemCard from '@/components/PoemCard.vue'
 
-export default {
-  name: 'Collection',
-  components: {
-    PoemCard
-  },
-  data() {
-    return {
-      searchQuery: '',
-      selectedDynasty: '',
-      selectedAuthor: ''
-    }
-  },
-  computed: {
-    collectedPoems() {
-      return this.$store.state.collectedPoems
-    },
-    uniqueAuthors() {
-      return [...new Set(this.collectedPoems.map(poem => poem.author))].filter(Boolean)
-    },
-    uniqueDynasties() {
-      return [...new Set(this.collectedPoems.map(poem => poem.dynasty))].filter(Boolean)
-    },
-    filteredPoems() {
-      let filtered = this.collectedPoems
+const router = useRouter()
+const poemStore = usePoemStore()
 
-      if (this.selectedDynasty) {
-        filtered = filtered.filter(poem => poem.dynasty === this.selectedDynasty)
-      }
+const searchQuery = ref('')
+const selectedDynasty = ref('')
+const selectedAuthor = ref('')
 
-      if (this.selectedAuthor) {
-        filtered = filtered.filter(poem => poem.author === this.selectedAuthor)
-      }
+const collectedPoems = computed(() => poemStore.collectedPoems)
 
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase()
-        filtered = filtered.filter(poem => 
-          poem.title.toLowerCase().includes(query) ||
-          poem.author.toLowerCase().includes(query) ||
-          poem.content.toLowerCase().includes(query)
-        )
-      }
+const uniqueAuthors = computed(() => {
+  return [...new Set(collectedPoems.value.map(poem => poem.author))].filter(Boolean)
+})
 
-      return filtered
-    }
-  },
-  methods: {
-    handleSearch() {
-      if (this.searchQuery.trim()) {
-        this.$router.push(`/search?q=${encodeURIComponent(this.searchQuery)}`)
-      }
-    },
-    resetFilters() {
-      this.selectedDynasty = ''
-      this.selectedAuthor = ''
-      this.searchQuery = ''
-    },
-    clearAll() {
-      if (confirm('确定要清空所有收藏吗？此操作不可撤销。')) {
-        this.$store.state.collectedPoems.forEach(poem => {
-          this.$store.commit('removeFromCollection', poem.id)
-        })
-      }
-    }
+const uniqueDynasties = computed(() => {
+  return [...new Set(collectedPoems.value.map(poem => poem.dynasty))].filter(Boolean)
+})
+
+const filteredPoems = computed(() => {
+  let filtered = collectedPoems.value
+
+  if (selectedDynasty.value) {
+    filtered = filtered.filter(poem => poem.dynasty === selectedDynasty.value)
+  }
+
+  if (selectedAuthor.value) {
+    filtered = filtered.filter(poem => poem.author === selectedAuthor.value)
+  }
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(poem => 
+      poem.title.toLowerCase().includes(query) ||
+      poem.author.toLowerCase().includes(query) ||
+      poem.content.toLowerCase().includes(query)
+    )
+  }
+
+  return filtered
+})
+
+const handleSearch = () => {
+  if (searchQuery.value.trim()) {
+    router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+  }
+}
+
+const resetFilters = () => {
+  selectedDynasty.value = ''
+  selectedAuthor.value = ''
+  searchQuery.value = ''
+}
+
+const clearAll = () => {
+  if (confirm('确定要清空所有收藏吗？此操作不可撤销。')) {
+    poemStore.clearCollection()
   }
 }
 </script>

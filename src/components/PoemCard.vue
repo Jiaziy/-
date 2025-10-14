@@ -32,25 +32,25 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'PoemCard',
-  props: {
-    poem: Object
-  },
-  computed: {
-    isCollected() {
-      return this.$store.state.collectedPoems.some(p => p.id === this.poem.id)
-    }
-  },
-  methods: {
-    toggleCollect() {
-      if (this.isCollected) {
-        this.$store.commit('removeFromCollection', this.poem.id)
-      } else {
-        this.$store.commit('addToCollection', this.poem)
-      }
-    }
+<script setup>
+import { computed } from 'vue'
+import { usePoemStore } from '@/stores/poem.js'
+
+const props = defineProps({
+  poem: Object
+})
+
+const poemStore = usePoemStore()
+
+const isCollected = computed(() => {
+  return poemStore.isPoemCollected(props.poem.id)
+})
+
+const toggleCollect = () => {
+  if (isCollected.value) {
+    poemStore.removeFromCollection(props.poem.id)
+  } else {
+    poemStore.addToCollection(props.poem)
   }
 }
 </script>

@@ -146,54 +146,55 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePoemStore } from '@/stores/poem.js'
 import { getPoemById } from '@/api/poems.js'
 
-export default {
-  name: 'Detail',
-  data() {
-    return {
-      poem: null,
-      loading: true,
-      showTranslation: true,
-      searchQuery: ''
-    }
-  },
-  computed: {
-    isCollected() {
-      return this.poem ? this.$store.state.collectedPoems.some(p => p.id === this.poem.id) : false
-    }
-  },
-  created() {
-    this.fetchPoem()
-  },
-  methods: {
-    async fetchPoem() {
-      try {
-        const poem = await getPoemById(this.$route.params.id)
-        this.poem = poem
-      } catch (error) {
-        console.error('获取诗词详情失败:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-    toggleCollect() {
-      if (!this.poem) return
-      
-      if (this.isCollected) {
-        this.$store.commit('removeFromCollection', this.poem.id)
-      } else {
-        this.$store.commit('addToCollection', this.poem)
-      }
-    },
-    handleSearch() {
-      if (this.searchQuery.trim()) {
-        this.$router.push(`/search?q=${encodeURIComponent(this.searchQuery)}`)
-      }
-    }
+const route = useRoute()
+const router = useRouter()
+const poemStore = usePoemStore()
+
+const poem = ref(null)
+const loading = ref(true)
+const showTranslation = ref(true)
+const searchQuery = ref('')
+
+const isCollected = computed(() => {
+  return poem.value ? poemStore.isPoemCollected(poem.value.id) : false
+})
+
+const fetchPoem = async () => {
+  try {
+    const poemData = await getPoemById(route.params.id)
+    poem.value = poemData
+  } catch (error) {
+    console.error('获取诗词详情失败:', error)
+  } finally {
+    loading.value = false
   }
 }
+
+const toggleCollect = () => {
+  if (!poem.value) return
+  
+  if (isCollected.value) {
+    poemStore.removeFromCollection(poem.value.id)
+  } else {
+    poemStore.addToCollection(poem.value)
+  }
+}
+
+const handleSearch = () => {
+  if (searchQuery.value.trim()) {
+    router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+  }
+}
+
+onMounted(() => {
+  fetchPoem()
+})
 </script>
 
 <style scoped>

@@ -9,6 +9,10 @@
       }
     }
   ],
+  "env": {
+    "VITE_SUPABASE_URL": "https://photmfalalncmgqvvfcd.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBob3RtZmFsYWxuY21ncXZ2ZmNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0OTU5ODksImV4cCI6MjA3NjA3MTk4OX0.fw0H7nOFpILgvMIFRd3fV-VJVBUDKFTB6W6q3-I1xmI"
+  },
   "routes": [
     {
       "src": "/assets/(.*)",

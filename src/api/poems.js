@@ -1,6 +1,4 @@
-import { supabase } from '../lib/supabase'
-
-// 模拟数据API（备用数据）
+// 模拟数据API
 const poemsData = [
   {
     id: 1,
@@ -115,90 +113,26 @@ const poemsData = [
 
 // 获取诗词列表
 export async function getPoems(page = 1, perPage = 10) {
-  try {
-    // 尝试从Supabase获取数据
-    const { data, error, count } = await supabase
-      .from('poems')
-      .select('*', { count: 'exact' })
-      .range((page - 1) * perPage, page * perPage - 1)
-      .order('id')
-
-    if (error || !data || data.length === 0) {
-      // 如果Supabase查询失败或没有数据，使用模拟数据
-      console.warn('Supabase查询失败，使用模拟数据:', error?.message)
-      const start = (page - 1) * perPage
-      const end = start + perPage
-      return {
-        poems: poemsData.slice(start, end),
-        total: poemsData.length
-      }
-    }
-
-    return {
-      poems: data,
-      total: count || data.length
-    }
-  } catch (error) {
-    console.error('获取诗词列表错误:', error)
-    // 出错时使用模拟数据
-    const start = (page - 1) * perPage
-    const end = start + perPage
-    return {
-      poems: poemsData.slice(start, end),
-      total: poemsData.length
-    }
+  const start = (page - 1) * perPage
+  const end = start + perPage
+  return {
+    poems: poemsData.slice(start, end),
+    total: poemsData.length
   }
 }
 
 // 根据ID获取诗词详情
 export async function getPoemById(id) {
-  try {
-    const { data, error } = await supabase
-      .from('poems')
-      .select('*')
-      .eq('id', Number(id))
-      .single()
-
-    if (error || !data) {
-      console.warn('Supabase查询失败，使用模拟数据:', error?.message)
-      return poemsData.find(poem => poem.id === Number(id))
-    }
-
-    return data
-  } catch (error) {
-    console.error('获取诗词详情错误:', error)
-    return poemsData.find(poem => poem.id === Number(id))
-  }
+  return poemsData.find(poem => poem.id === Number(id))
 }
 
 // 搜索诗词
 export async function searchPoems(query) {
   if (!query) return []
-  
-  try {
-    const { data, error } = await supabase
-      .from('poems')
-      .select('*')
-      .or(`title.ilike.%${query}%,author.ilike.%${query}%,content.ilike.%${query}%`)
-
-    if (error || !data || data.length === 0) {
-      console.warn('Supabase搜索失败，使用模拟数据:', error?.message)
-      const lowerQuery = query.toLowerCase()
-      return poemsData.filter(poem => 
-        poem.title.toLowerCase().includes(lowerQuery) ||
-        poem.author.toLowerCase().includes(lowerQuery) ||
-        poem.content.toLowerCase().includes(lowerQuery)
-      )
-    }
-
-    return data
-  } catch (error) {
-    console.error('搜索诗词错误:', error)
-    const lowerQuery = query.toLowerCase()
-    return poemsData.filter(poem => 
-      poem.title.toLowerCase().includes(lowerQuery) ||
-      poem.author.toLowerCase().includes(lowerQuery) ||
-      poem.content.toLowerCase().includes(lowerQuery)
-    )
-  }
+  const lowerQuery = query.toLowerCase()
+  return poemsData.filter(poem => 
+    poem.title.toLowerCase().includes(lowerQuery) ||
+    poem.author.toLowerCase().includes(lowerQuery) ||
+    poem.content.toLowerCase().includes(lowerQuery)
+  )
 }

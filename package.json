@@ -12,7 +12,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "vercel-build": "chmod +x node_modules/.bin/vite &&npm run build"
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "vue": "^3.4.0",

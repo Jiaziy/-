@@ -19,7 +19,7 @@ export default defineConfig({
       output: {
         assetFileNames: (assetInfo) => {
           if (assetInfo.names && assetInfo.names[0] && assetInfo.names[0].endsWith('.css')) {
-            return 'assets/index-[hash].css'
+            return 'assets/index-[hash][extname]'
           }
           return 'assets/[name]-[hash][extname]'
         }

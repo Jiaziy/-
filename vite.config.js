@@ -18,7 +18,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+          if (assetInfo.names && assetInfo.names[0] && assetInfo.names[0].endsWith('.css')) {
             return 'assets/index-[hash].css'
           }
           return 'assets/[name]-[hash][extname]'

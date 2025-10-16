@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// 调试环境变量
+console.log('Supabase环境变量检测:')
+console.log('URL:', supabaseUrl ? '已配置' : '未配置')
+console.log('KEY:', supabaseAnonKey ? '已配置' : '未配置')
+
 // 创建模拟的Supabase客户端用于降级处理
 const createMockSupabaseClient = () => {
   console.warn('Supabase环境变量未配置，使用模拟客户端')
@@ -38,6 +43,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase环境变量未配置，应用将以降级模式运行')
   supabaseClient = createMockSupabaseClient()
 } else {
+  console.log('Supabase环境变量已配置，使用真实客户端')
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
 }
 

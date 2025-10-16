@@ -28,7 +28,19 @@
       <!-- Page Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold mb-4">诗词列表</h1>
-        <p class="text-gray-600">浏览所有诗词作品，感受中华文化的博大精深</p>
+        <p class="text-gray-600" v-if="!selectedDynasty && !selectedAuthor">
+          浏览所有诗词作品，感受中华文化的博大精深
+        </p>
+        <p class="text-gray-600" v-else-if="selectedDynasty && !selectedAuthor">
+          正在浏览 <span class="font-semibold text-blue-600">{{ selectedDynasty }}</span> 朝代的诗词作品
+        </p>
+        <p class="text-gray-600" v-else-if="!selectedDynasty && selectedAuthor">
+          正在浏览 <span class="font-semibold text-blue-600">{{ selectedAuthor }}</span> 的诗词作品
+        </p>
+        <p class="text-gray-600" v-else>
+          正在浏览 <span class="font-semibold text-blue-600">{{ selectedDynasty }}</span> 朝代 
+          <span class="font-semibold text-blue-600">{{ selectedAuthor }}</span> 的诗词作品
+        </p>
       </div>
 
       <!-- Filter Section -->
@@ -128,24 +140,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import PoemCard from '@/components/PoemCard.vue'
 import Pagination from '@/components/Pagination.vue'
-import { getPoems } from '@/api/poems.js'
+import { getPoems, getPoemsByDynasty, getPoemsByAuthor, getDynasties, getAuthors } from '@/api/supabasePoems.js'
 
 const router = useRouter()
+const route = useRoute()
 
 const poems = ref([])
 const total = ref(0)
 const perPage = ref(9)
 const currentPage = ref(1)
 const searchQuery = ref('')
-const selectedDynasty = ref('')
-const selectedAuthor = ref('')
+const selectedDynasty = ref(route.query.dynasty || '')
+const selectedAuthor = ref(route.query.author || '')
 const sortBy = ref('title')
-const dynasties = ref(['先秦', '汉朝', '魏晋', '唐朝', '宋朝', '明清'])
-const authors = ref(['李白', '杜甫', '苏轼', '辛弃疾', '李清照', '纳兰性德'])
+const dynasties = ref([])
+const authors = ref([])
 
 const filteredPoems = computed(() => {
   let filtered = poems.value
@@ -189,11 +202,29 @@ const paginatedPoems = computed(() => {
 
 const fetchPoems = async () => {
   try {
-    const data = await getPoems()
+    const data = await getPoems(currentPage.value, perPage.value)
     poems.value = data.poems
     total.value = data.total
   } catch (error) {
     console.error('获取诗词列表失败:', error)
+  }
+}
+
+const fetchDynasties = async () => {
+  try {
+    const data = await getDynasties()
+    dynasties.value = data
+  } catch (error) {
+    console.error('获取朝代列表失败:', error)
+  }
+}
+
+const fetchAuthors = async () => {
+  try {
+    const data = await getAuthors()
+    authors.value = data
+  } catch (error) {
+    console.error('获取作者列表失败:', error)
   }
 }
 
@@ -217,8 +248,52 @@ const resetFilters = () => {
   currentPage.value = 1
 }
 
-onMounted(() => {
-  fetchPoems()
+// 监听路由参数变化
+watch(() => route.query, async (newQuery) => {
+  if (newQuery.dynasty) {
+    selectedDynasty.value = newQuery.dynasty
+    const data = await getPoemsByDynasty(newQuery.dynasty, currentPage.value, perPage.value)
+    poems.value = data.poems
+    total.value = data.total
+  } else if (newQuery.author) {
+    selectedAuthor.value = newQuery.author
+    const data = await getPoemsByAuthor(newQuery.author, currentPage.value, perPage.value)
+    poems.value = data.poems
+    total.value = data.total
+  } else {
+    await fetchPoems()
+  }
+  currentPage.value = 1
+})
+
+onMounted(async () => {
+  await fetchPoems()
+  await fetchDynasties()
+  await fetchAuthors()
+})
+
+// 当筛选条件变化时更新URL和数据
+watch([selectedDynasty, selectedAuthor], async ([dynasty, author]) => {
+  const query = { ...route.query }
+  
+  if (dynasty) {
+    query.dynasty = dynasty
+    const data = await getPoemsByDynasty(dynasty, currentPage.value, perPage.value)
+    poems.value = data.poems
+    total.value = data.total
+  } else if (author) {
+    query.author = author
+    const data = await getPoemsByAuthor(author, currentPage.value, perPage.value)
+    poems.value = data.poems
+    total.value = data.total
+  } else {
+    await fetchPoems()
+  }
+  
+  if (!dynasty) delete query.dynasty
+  if (!author) delete query.author
+  
+  router.replace({ query })
 })
 </script>
 

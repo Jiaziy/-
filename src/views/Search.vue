@@ -127,7 +127,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import SearchBox from '@/components/SearchBox.vue'
 import PoemCard from '@/components/PoemCard.vue'
-import { searchPoems } from '@/api/poems.js'
+import { searchPoems } from '@/api/supabasePoems.js'
 
 const route = useRoute()
 

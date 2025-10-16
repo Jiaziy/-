@@ -273,9 +273,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePoemStore } from '@/stores/poem.js';
+import { getPoems } from '@/api/supabasePoems.js';
 import PoemQuiz from '@/components/PoemQuiz.vue';
 
 const router = useRouter();
@@ -341,56 +342,31 @@ const authors = ref([
   }
 ]);
 
-const featuredPoems = ref([
-  {
-    id: 1,
-    title: "静夜思",
-    author: "李白",
-    dynasty: "唐朝",
-    excerpt: "床前明月光，疑是地上霜。举头望明月，低头思故乡。",
-    authorAvatar: "https://ai-public.mastergo.com/ai/img_res/8739879f2b60076c21e6c956d7ae7c12.jpg"
-  },
-  {
-    id: 2,
-    title: "春望",
-    author: "杜甫",
-    dynasty: "唐朝",
-    excerpt: "国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。",
-    authorAvatar: "https://ai-public.mastergo.com/ai/img_res/e045225d07d3433b81e1fde47bfa88c5.jpg"
-  },
-  {
-    id: 3,
-    title: "水调歌头",
-    author: "苏轼",
-    dynasty: "宋朝",
-    excerpt: "明月几时有？把酒问青天。不知天上宫阙，今夕是何年。",
-    authorAvatar: "https://ai-public.mastergo.com/ai/img_res/de5ad59e1b164fd15ccca039b7f5f55f.jpg"
-  },
-  {
-    id: 4,
-    title: "青玉案·元夕",
-    author: "辛弃疾",
-    dynasty: "宋朝",
-    excerpt: "东风夜放花千树，更吹落、星如雨。宝马雕车香满路。",
-    authorAvatar: "https://ai-public.mastergo.com/ai/img_res/44cc889134c891765cc9bd2b63f69608.jpg"
-  },
-  {
-    id: 5,
-    title: "声声慢",
-    author: "李清照",
-    dynasty: "宋朝",
-    excerpt: "寻寻觅觅，冷冷清清，凄凄惨惨戚戚。乍暖还寒时候，最难将息。",
-    authorAvatar: "https://ai-public.mastergo.com/ai/img_res/53a824c485a461639165d9962127ea10.jpg"
-  },
-  {
-    id: 6,
-    title: "木兰词",
-    author: "纳兰性德",
-    dynasty: "清朝",
-    excerpt: "人生若只如初见，何事秋风悲画扇。等闲变却故人心，却道故人心易变。",
-    authorAvatar: "https://ai-public.mastergo.com/ai/img_res/dfa183d21ca2fa336e646fdbace95267.jpg"
+const featuredPoems = ref([])
+
+// 作者头像映射
+const authorAvatars = {
+  '李白': 'https://ai-public.mastergo.com/ai/img_res/8739879f2b60076c21e6c956d7ae7c12.jpg',
+  '杜甫': 'https://ai-public.mastergo.com/ai/img_res/e045225d07d3433b81e1fde47bfa88c5.jpg',
+  '苏轼': 'https://ai-public.mastergo.com/ai/img_res/de5ad59e1b164fd15ccca039b7f5f55f.jpg',
+  '辛弃疾': 'https://ai-public.mastergo.com/ai/img_res/44cc889134c891765cc9bd2b63f69608.jpg',
+  '李清照': 'https://ai-public.mastergo.com/ai/img_res/53a824c485a461639165d9962127ea10.jpg',
+  '纳兰性德': 'https://ai-public.mastergo.com/ai/img_res/dfa183d21ca2fa336e646fdbace95267.jpg'
+}
+
+// 获取精选诗词
+const fetchFeaturedPoems = async () => {
+  try {
+    const data = await getPoems(1, 6) // 获取前6首诗词作为精选
+    featuredPoems.value = data.poems.map(poem => ({
+      ...poem,
+      excerpt: poem.content.split('。')[0] + '。', // 取第一句作为摘要
+      authorAvatar: authorAvatars[poem.author] || 'https://ai-public.mastergo.com/ai/img_res/default-avatar.jpg'
+    }))
+  } catch (error) {
+    console.error('获取精选诗词失败:', error)
   }
-]);
+}
 
 const startExploring = () => {
   router.push('/list');
@@ -401,11 +377,17 @@ const learnMore = () => {
 };
 
 const navigateToDynasty = (name) => {
-  router.push(`/list?dynasty=${encodeURIComponent(name)}`);
+  router.push({ 
+    path: '/list',
+    query: { dynasty: name }
+  });
 };
 
 const navigateToAuthor = (name) => {
-  router.push(`/list?author=${encodeURIComponent(name)}`);
+  router.push({ 
+    path: '/list',
+    query: { author: name }
+  });
 };
 
 const navigateToPoem = (poemId) => {
@@ -461,6 +443,11 @@ const showContact = () => {
 const showCopyright = () => {
   alert('本网站所有内容仅供学习交流使用，诗词版权归原作者所有。');
 };
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchFeaturedPoems()
+})
 </script>
 
 <style scoped>

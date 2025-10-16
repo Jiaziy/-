@@ -1,5 +1,5 @@
 // 模拟数据API
-const poemsData = [
+export const poemsData = [
   {
     id: 1,
     title: '静夜思',

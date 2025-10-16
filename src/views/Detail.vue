@@ -169,7 +169,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePoemStore } from '@/stores/poem.js'
-import { getPoemById } from '@/api/poems.js'
+import { getPoemById } from '@/api/supabasePoems.js'
 import AudioPlayer from '@/components/AudioPlayer.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import CommentSection from '@/components/CommentSection.vue'

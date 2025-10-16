@@ -5,6 +5,8 @@ import Detail from './views/Detail.vue'
 import Search from './views/Search.vue'
 import Collection from './views/Collection.vue'
 import Interactive from './views/Interactive.vue'
+import SupabaseTest from './views/SupabaseTest.vue'
+import CheckDatabase from './views/CheckDatabase.vue'
 
 const routes = [
   {
@@ -38,6 +40,16 @@ const routes = [
     path: '/interactive',
     name: 'interactive',
     component: Interactive
+  },
+  {
+    path: '/supabase-test',
+    name: 'supabase-test',
+    component: SupabaseTest
+  },
+  {
+    path: '/check-database',
+    name: 'check-database',
+    component: CheckDatabase
   },
   {
     path: '/:pathMatch(.*)*',

@@ -3,6 +3,12 @@ import { supabase } from '@/lib/supabase'
 // 获取诗词列表
 export async function getPoems(page = 1, perPage = 10) {
   try {
+    // 检查supabase是否可用
+    if (!supabase || typeof supabase.from !== 'function') {
+      console.warn('Supabase不可用，返回空数据')
+      return { poems: [], total: 0 }
+    }
+    
     const from = (page - 1) * perPage
     const to = from + perPage - 1
     
@@ -27,6 +33,12 @@ export async function getPoems(page = 1, perPage = 10) {
 // 根据ID获取诗词详情
 export async function getPoemById(id) {
   try {
+    // 检查supabase是否可用
+    if (!supabase || typeof supabase.from !== 'function') {
+      console.warn('Supabase不可用，返回空数据')
+      return null
+    }
+    
     const { data, error } = await supabase
       .from('poems')
       .select('*')
@@ -46,6 +58,12 @@ export async function searchPoems(query) {
   if (!query) return []
   
   try {
+    // 检查supabase是否可用
+    if (!supabase || typeof supabase.from !== 'function') {
+      console.warn('Supabase不可用，返回空数据')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('poems')
       .select('*')
@@ -63,6 +81,12 @@ export async function searchPoems(query) {
 // 按朝代筛选诗词
 export async function getPoemsByDynasty(dynasty, page = 1, perPage = 10) {
   try {
+    // 检查supabase是否可用
+    if (!supabase || typeof supabase.from !== 'function') {
+      console.warn('Supabase不可用，返回空数据')
+      return { poems: [], total: 0 }
+    }
+    
     const from = (page - 1) * perPage
     const to = from + perPage - 1
     
@@ -88,6 +112,12 @@ export async function getPoemsByDynasty(dynasty, page = 1, perPage = 10) {
 // 按作者筛选诗词
 export async function getPoemsByAuthor(author, page = 1, perPage = 10) {
   try {
+    // 检查supabase是否可用
+    if (!supabase || typeof supabase.from !== 'function') {
+      console.warn('Supabase不可用，返回空数据')
+      return { poems: [], total: 0 }
+    }
+    
     const from = (page - 1) * perPage
     const to = from + perPage - 1
     
@@ -113,6 +143,12 @@ export async function getPoemsByAuthor(author, page = 1, perPage = 10) {
 // 获取所有朝代列表
 export async function getDynasties() {
   try {
+    // 检查supabase是否可用
+    if (!supabase || typeof supabase.from !== 'function') {
+      console.warn('Supabase不可用，返回空数据')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('poems')
       .select('dynasty')
@@ -132,6 +168,12 @@ export async function getDynasties() {
 // 获取所有作者列表
 export async function getAuthors() {
   try {
+    // 检查supabase是否可用
+    if (!supabase || typeof supabase.from !== 'function') {
+      console.warn('Supabase不可用，返回空数据')
+      return []
+    }
+    
     const { data, error } = await supabase
       .from('poems')
       .select('author')

@@ -365,6 +365,33 @@ const fetchFeaturedPoems = async () => {
     }))
   } catch (error) {
     console.error('获取精选诗词失败:', error)
+    // 如果获取失败，使用默认数据
+    featuredPoems.value = [
+      {
+        id: 1,
+        title: '静夜思',
+        excerpt: '床前明月光，疑是地上霜。',
+        author: '李白',
+        dynasty: '唐朝',
+        authorAvatar: authorAvatars['李白']
+      },
+      {
+        id: 2,
+        title: '春晓',
+        excerpt: '春眠不觉晓，处处闻啼鸟。',
+        author: '孟浩然',
+        dynasty: '唐朝',
+        authorAvatar: 'https://ai-public.mastergo.com/ai/img_res/default-avatar.jpg'
+      },
+      {
+        id: 3,
+        title: '登鹳雀楼',
+        excerpt: '白日依山尽，黄河入海流。',
+        author: '王之涣',
+        dynasty: '唐朝',
+        authorAvatar: 'https://ai-public.mastergo.com/ai/img_res/default-avatar.jpg'
+      }
+    ]
   }
 }
 

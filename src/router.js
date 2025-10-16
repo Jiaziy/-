@@ -4,6 +4,7 @@ import List from './views/List.vue'
 import Detail from './views/Detail.vue'
 import Search from './views/Search.vue'
 import Collection from './views/Collection.vue'
+import Interactive from './views/Interactive.vue'
 
 const routes = [
   {
@@ -32,6 +33,11 @@ const routes = [
     path: '/collection',
     name: 'collection',
     component: Collection
+  },
+  {
+    path: '/interactive',
+    name: 'interactive',
+    component: Interactive
   },
   {
     path: '/:pathMatch(.*)*',

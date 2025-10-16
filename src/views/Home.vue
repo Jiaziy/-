@@ -9,17 +9,17 @@
         <h1 class="text-xl font-bold tracking-wider">古韵诗语</h1>
       </div>
       <nav class="hidden md:flex space-x-6">
-        <a href="#" class="font-medium hover:text-gray-500 transition-colors">首页</a>
-        <a href="#" class="font-medium hover:text-gray-500 transition-colors">朝代</a>
-        <a href="#" class="font-medium hover:text-gray-500 transition-colors">诗人</a>
-        <a href="#" class="font-medium hover:text-gray-500 transition-colors">赏析</a>
-        <a href="#" class="font-medium hover:text-gray-500 transition-colors">收藏</a>
+        <router-link to="/" class="font-medium hover:text-gray-500 transition-colors">首页</router-link>
+        <router-link to="/list" class="font-medium hover:text-gray-500 transition-colors">诗词列表</router-link>
+        <router-link to="/interactive" class="font-medium hover:text-gray-500 transition-colors">互动学习</router-link>
+        <router-link to="/collection" class="font-medium hover:text-gray-500 transition-colors">我的收藏</router-link>
       </nav>
       <div class="relative w-64">
         <input
           type="text"
           placeholder="搜索诗词或作者..."
           class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
+          @keyup="handleSearch"
         />
         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
       </div>
@@ -40,10 +40,16 @@
           在这里，您可以品读唐诗宋词的绝世风华，领略古代文人的情怀与智慧。每一首诗词都是历史的回响，每一段文字都承载着深厚的文化底蕴。
         </p>
         <div class="flex space-x-4">
-          <button class="!rounded-button whitespace-nowrap bg-white text-gray-800 px-6 py-3 font-semibold hover:bg-gray-100 transition-colors">
+          <button 
+            @click="startExploring"
+            class="!rounded-button whitespace-nowrap bg-white text-gray-800 px-6 py-3 font-semibold hover:bg-gray-100 transition-colors"
+          >
             开始探索
           </button>
-          <button class="!rounded-button whitespace-nowrap border-2 border-white text-white px-6 py-3 font-semibold hover:bg-white/10 transition-colors">
+          <button 
+            @click="learnMore"
+            class="!rounded-button whitespace-nowrap border-2 border-white text-white px-6 py-3 font-semibold hover:bg-white/10 transition-colors"
+          >
             了解我们
           </button>
         </div>
@@ -99,12 +105,84 @@
       </div>
     </section>
 
+    <!-- Interactive Features -->
+    <section class="py-16 bg-gray-50">
+      <div class="container mx-auto px-8">
+        <h2 class="text-3xl font-bold text-center mb-12">互动学习</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Quiz Section -->
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
+              <div class="flex items-center space-x-3">
+                <i class="fas fa-brain text-2xl"></i>
+                <div>
+                  <h3 class="text-xl font-bold">诗词知识问答</h3>
+                  <p class="text-purple-100">测试您的诗词知识储备</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6">
+              <PoemQuiz />
+            </div>
+          </div>
+
+          <!-- Learning Tools -->
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-teal-600 p-6 text-white">
+              <div class="flex items-center space-x-3">
+                <i class="fas fa-graduation-cap text-2xl"></i>
+                <div>
+                  <h3 class="text-xl font-bold">学习工具</h3>
+                  <p class="text-green-100">多种方式助您学习诗词</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6">
+              <div class="grid grid-cols-2 gap-4">
+                <div 
+                  @click="navigateToInteractive('audio')"
+                  class="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <i class="fas fa-volume-up text-2xl text-blue-600 mb-2"></i>
+                  <p class="font-medium">诗词朗读</p>
+                </div>
+                <div 
+                  @click="navigateToInteractive('fillblank')"
+                  class="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <i class="fas fa-puzzle-piece text-2xl text-green-600 mb-2"></i>
+                  <p class="font-medium">填空游戏</p>
+                </div>
+                <div 
+                  @click="navigateToInteractive('share')"
+                  class="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <i class="fas fa-share-alt text-2xl text-purple-600 mb-2"></i>
+                  <p class="font-medium">分享诗词</p>
+                </div>
+                <div 
+                  @click="navigateToInteractive('discussion')"
+                  class="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <i class="fas fa-comments text-2xl text-orange-600 mb-2"></i>
+                  <p class="font-medium">交流讨论</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Featured Poems -->
     <section class="py-16 bg-white">
       <div class="container mx-auto px-8">
         <div class="flex justify-between items-center mb-12">
           <h2 class="text-3xl font-bold">精选诗词</h2>
-          <button class="!rounded-button whitespace-nowrap text-blue-600 border border-blue-600 px-4 py-2 hover:bg-blue-50 transition-colors">
+          <button 
+            @click="viewMorePoems"
+            class="!rounded-button whitespace-nowrap text-blue-600 border border-blue-600 px-4 py-2 hover:bg-blue-50 transition-colors"
+          >
             查看更多
           </button>
         </div>
@@ -112,13 +190,18 @@
           <div
             v-for="(poem, index) in featuredPoems"
             :key="index"
-            class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
+            class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+            @click="navigateToPoem(poem.id)"
           >
             <div class="p-6">
               <div class="flex justify-between items-start mb-4">
                 <h3 class="text-xl font-bold">{{ poem.title }}</h3>
-                <button class="text-gray-400 hover:text-red-500">
-                  <i class="far fa-heart"></i>
+                <button 
+                  @click.stop="toggleCollect(poem)"
+                  class="text-gray-400 hover:text-red-500 transition-colors"
+                  :class="{ 'text-red-500': isPoemCollected(poem.id) }"
+                >
+                  <i class="fas" :class="isPoemCollected(poem.id) ? 'fa-heart' : 'fa-heart'"></i>
                 </button>
               </div>
               <p class="text-gray-600 mb-4 line-clamp-3">{{ poem.excerpt }}</p>
@@ -150,19 +233,19 @@
           <div>
             <h4 class="font-bold mb-4">快速链接</h4>
             <ul class="space-y-2 text-gray-400">
-              <li><a href="#" class="hover:text-white transition-colors">首页</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">朝代大全</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">诗人名录</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">诗词分类</a></li>
+              <li><router-link to="/" class="hover:text-white transition-colors">首页</router-link></li>
+              <li><router-link to="/list" class="hover:text-white transition-colors">诗词列表</router-link></li>
+              <li><router-link to="/interactive" class="hover:text-white transition-colors">互动学习</router-link></li>
+              <li><router-link to="/collection" class="hover:text-white transition-colors">我的收藏</router-link></li>
             </ul>
           </div>
           <div>
             <h4 class="font-bold mb-4">关于我们</h4>
             <ul class="space-y-2 text-gray-400">
-              <li><a href="#" class="hover:text-white transition-colors">项目介绍</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">团队成员</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">联系我们</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">版权声明</a></li>
+              <li><a href="#" @click.prevent="showAbout" class="hover:text-white transition-colors">项目介绍</a></li>
+              <li><a href="#" @click.prevent="showTeam" class="hover:text-white transition-colors">团队成员</a></li>
+              <li><a href="#" @click.prevent="showContact" class="hover:text-white transition-colors">联系我们</a></li>
+              <li><a href="#" @click.prevent="showCopyright" class="hover:text-white transition-colors">版权声明</a></li>
             </ul>
           </div>
           <div>
@@ -191,6 +274,12 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { usePoemStore } from '@/stores/poem.js';
+import PoemQuiz from '@/components/PoemQuiz.vue';
+
+const router = useRouter();
+const poemStore = usePoemStore();
 
 const dynasties = ref([
   {
@@ -254,6 +343,7 @@ const authors = ref([
 
 const featuredPoems = ref([
   {
+    id: 1,
     title: "静夜思",
     author: "李白",
     dynasty: "唐朝",
@@ -261,6 +351,7 @@ const featuredPoems = ref([
     authorAvatar: "https://ai-public.mastergo.com/ai/img_res/8739879f2b60076c21e6c956d7ae7c12.jpg"
   },
   {
+    id: 2,
     title: "春望",
     author: "杜甫",
     dynasty: "唐朝",
@@ -268,6 +359,7 @@ const featuredPoems = ref([
     authorAvatar: "https://ai-public.mastergo.com/ai/img_res/e045225d07d3433b81e1fde47bfa88c5.jpg"
   },
   {
+    id: 3,
     title: "水调歌头",
     author: "苏轼",
     dynasty: "宋朝",
@@ -275,6 +367,7 @@ const featuredPoems = ref([
     authorAvatar: "https://ai-public.mastergo.com/ai/img_res/de5ad59e1b164fd15ccca039b7f5f55f.jpg"
   },
   {
+    id: 4,
     title: "青玉案·元夕",
     author: "辛弃疾",
     dynasty: "宋朝",
@@ -282,6 +375,7 @@ const featuredPoems = ref([
     authorAvatar: "https://ai-public.mastergo.com/ai/img_res/44cc889134c891765cc9bd2b63f69608.jpg"
   },
   {
+    id: 5,
     title: "声声慢",
     author: "李清照",
     dynasty: "宋朝",
@@ -289,6 +383,7 @@ const featuredPoems = ref([
     authorAvatar: "https://ai-public.mastergo.com/ai/img_res/53a824c485a461639165d9962127ea10.jpg"
   },
   {
+    id: 6,
     title: "木兰词",
     author: "纳兰性德",
     dynasty: "清朝",
@@ -297,12 +392,74 @@ const featuredPoems = ref([
   }
 ]);
 
+const startExploring = () => {
+  router.push('/list');
+};
+
+const learnMore = () => {
+  router.push('/interactive');
+};
+
 const navigateToDynasty = (name) => {
-  console.log(`Navigating to dynasty: ${name}`);
+  router.push(`/list?dynasty=${encodeURIComponent(name)}`);
 };
 
 const navigateToAuthor = (name) => {
-  console.log(`Navigating to author: ${name}`);
+  router.push(`/list?author=${encodeURIComponent(name)}`);
+};
+
+const navigateToPoem = (poemId) => {
+  router.push(`/detail/${poemId}`);
+};
+
+const viewMorePoems = () => {
+  router.push('/list');
+};
+
+const handleSearch = (event) => {
+  const query = event.target.value.trim();
+  if (query && event.key === 'Enter') {
+    router.push(`/search?q=${encodeURIComponent(query)}`);
+  }
+};
+
+const navigateToInteractive = (feature) => {
+  router.push('/interactive');
+  // 可以添加滚动到特定功能区域的逻辑
+  setTimeout(() => {
+    const element = document.getElementById(feature);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, 100);
+};
+
+const toggleCollect = (poem) => {
+  if (isPoemCollected(poem.id)) {
+    poemStore.removeFromCollection(poem.id);
+  } else {
+    poemStore.addToCollection(poem);
+  }
+};
+
+const isPoemCollected = (poemId) => {
+  return poemStore.isPoemCollected(poemId);
+};
+
+const showAbout = () => {
+  alert('古韵诗语 - 致力于传承中华古典诗词文化，为诗词爱好者提供高质量的鉴赏与学习平台。');
+};
+
+const showTeam = () => {
+  alert('我们的团队由热爱古典文学的开发者和设计师组成，致力于打造最好的诗词学习体验。');
+};
+
+const showContact = () => {
+  alert('如有任何问题或建议，请联系我们：contact@gushici.com');
+};
+
+const showCopyright = () => {
+  alert('本网站所有内容仅供学习交流使用，诗词版权归原作者所有。');
 };
 </script>
 

@@ -43,13 +43,17 @@
                 <span class="bg-white/20 px-3 py-1 rounded-full text-sm">{{ poem.dynasty || '未知朝代' }}</span>
               </div>
             </div>
-            <button 
-              @click="toggleCollect"
-              class="text-white hover:text-red-200 transition-colors p-3 rounded-full hover:bg-white/10"
-              :class="{ 'text-red-300': isCollected }"
-            >
-              <i class="fas text-2xl" :class="isCollected ? 'fa-heart' : 'fa-heart'"></i>
-            </button>
+            <div class="flex items-center space-x-2">
+              <AudioPlayer />
+              <ShareButton />
+              <button 
+                @click="toggleCollect"
+                class="text-white hover:text-red-200 transition-colors p-3 rounded-full hover:bg-white/10"
+                :class="{ 'text-red-300': isCollected }"
+              >
+                <i class="fas text-2xl" :class="isCollected ? 'fa-heart' : 'fa-heart'"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -96,6 +100,21 @@
             <h2 class="text-xl font-bold mb-4 text-gray-800">赏析</h2>
             <div class="bg-purple-50 rounded-lg p-6">
               <p class="text-gray-700 leading-relaxed">{{ poem.appreciation }}</p>
+            </div>
+          </section>
+
+          <!-- Interactive Features -->
+          <section class="mt-12">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">互动学习</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <h3 class="text-lg font-semibold mb-4">诗词背诵挑战</h3>
+                <RecitationGame />
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-4">评论交流</h3>
+                <CommentSection />
+              </div>
             </div>
           </section>
         </div>
@@ -151,6 +170,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePoemStore } from '@/stores/poem.js'
 import { getPoemById } from '@/api/poems.js'
+import AudioPlayer from '@/components/AudioPlayer.vue'
+import ShareButton from '@/components/ShareButton.vue'
+import CommentSection from '@/components/CommentSection.vue'
+import RecitationGame from '@/components/RecitationGame.vue'
 
 const route = useRoute()
 const router = useRouter()

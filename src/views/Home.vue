@@ -13,17 +13,146 @@
         <router-link to="/list" class="font-medium hover:text-gray-500 transition-colors">诗词列表</router-link>
         <router-link to="/interactive" class="font-medium hover:text-gray-500 transition-colors">互动学习</router-link>
         <router-link to="/collection" class="font-medium hover:text-gray-500 transition-colors">我的收藏</router-link>
+        <router-link v-if="authStore.user" to="/profile" class="font-medium hover:text-gray-500 transition-colors">个人中心</router-link>
       </nav>
-      <div class="relative w-64">
-        <input
-          type="text"
-          placeholder="搜索诗词或作者..."
-          class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
-          @keyup="handleSearch"
-        />
-        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+      <div class="flex items-center space-x-4">
+        <div class="relative w-64">
+          <input
+            type="text"
+            placeholder="搜索诗词或作者..."
+            class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
+            @keyup="handleSearch"
+          />
+          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+        </div>
+        
+        <!-- 用户登录状态 -->
+        <div class="flex items-center space-x-2">
+          <div v-if="authStore.user" class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold">
+              {{ authStore.user.email?.charAt(0).toUpperCase() }}
+            </div>
+            <span class="text-sm text-gray-600 hidden md:block">{{ authStore.user.email }}</span>
+            <button 
+              @click="handleLogout"
+              class="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              退出
+            </button>
+          </div>
+          <div v-else class="flex space-x-2">
+            <button 
+              @click="showLoginModal = true"
+              class="text-sm bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors"
+            >
+              登录
+            </button>
+            <button 
+              @click="showRegisterModal = true"
+              class="text-sm border border-blue-500 text-blue-500 px-4 py-2 rounded-full hover:bg-blue-50 transition-colors"
+            >
+              注册
+            </button>
+          </div>
+        </div>
       </div>
     </header>
+
+    <!-- 登录模态框 -->
+    <div v-if="showLoginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">用户登录</h3>
+          <button @click="showLoginModal = false" class="text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <form @submit.prevent="handleLogin">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+              <input
+                v-model="loginForm.email"
+                type="email"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="请输入邮箱"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+              <input
+                v-model="loginForm.password"
+                type="password"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="请输入密码"
+              />
+            </div>
+            <button
+              type="submit"
+              :disabled="loginLoading"
+              class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50"
+            >
+              {{ loginLoading ? '登录中...' : '登录' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div v-if="showRegisterModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">用户注册</h3>
+          <button @click="showRegisterModal = false" class="text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <form @submit.prevent="handleRegister">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+              <input
+                v-model="registerForm.email"
+                type="email"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="请输入邮箱"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+              <input
+                v-model="registerForm.password"
+                type="password"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="请输入密码（至少6位）"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+              <input
+                v-model="registerForm.confirmPassword"
+                type="password"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="请再次输入密码"
+              />
+            </div>
+            <button
+              type="submit"
+              :disabled="registerLoading"
+              class="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
+            >
+              {{ registerLoading ? '注册中...' : '注册' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="relative h-[500px] overflow-hidden">
@@ -273,14 +402,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePoemStore } from '@/stores/poem.js';
+import { useAuthStore } from '@/stores/auth.js';
 import { getPoems } from '@/api/supabasePoems.js';
 import PoemQuiz from '@/components/PoemQuiz.vue';
 
 const router = useRouter();
 const poemStore = usePoemStore();
+const authStore = useAuthStore();
+
+// 用户认证相关状态
+const showLoginModal = ref(false);
+const showRegisterModal = ref(false);
+const loginLoading = ref(false);
+const registerLoading = ref(false);
+
+const loginForm = reactive({
+  email: '',
+  password: ''
+});
+
+const registerForm = reactive({
+  email: '',
+  password: '',
+  confirmPassword: ''
+});
 
 const dynasties = ref([
   {
@@ -471,9 +619,90 @@ const showCopyright = () => {
   alert('本网站所有内容仅供学习交流使用，诗词版权归原作者所有。');
 };
 
-// 组件挂载时获取数据
+// 用户认证相关函数
+const handleLogin = async () => {
+  if (!loginForm.email || !loginForm.password) {
+    alert('请输入邮箱和密码');
+    return;
+  }
+
+  loginLoading.value = true;
+  try {
+    const result = await authStore.login(loginForm.email, loginForm.password);
+    
+    if (result.success) {
+      showLoginModal.value = false;
+      loginForm.email = '';
+      loginForm.password = '';
+      alert('登录成功！');
+    } else {
+      alert('登录失败：' + result.error);
+    }
+  } catch (error) {
+    console.error('登录失败:', error);
+    alert('登录失败：' + error.message);
+  } finally {
+    loginLoading.value = false;
+  }
+};
+
+const handleRegister = async () => {
+  if (!registerForm.email || !registerForm.password || !registerForm.confirmPassword) {
+    alert('请填写所有字段');
+    return;
+  }
+
+  if (registerForm.password !== registerForm.confirmPassword) {
+    alert('两次输入的密码不一致');
+    return;
+  }
+
+  if (registerForm.password.length < 6) {
+    alert('密码长度至少为6位');
+    return;
+  }
+
+  registerLoading.value = true;
+  try {
+    const result = await authStore.register(registerForm.email, registerForm.password);
+    
+    if (result.success) {
+      showRegisterModal.value = false;
+      registerForm.email = '';
+      registerForm.password = '';
+      registerForm.confirmPassword = '';
+      alert('注册成功！请检查邮箱验证邮件。');
+    } else {
+      alert('注册失败：' + result.error);
+    }
+  } catch (error) {
+    console.error('注册失败:', error);
+    alert('注册失败：' + error.message);
+  } finally {
+    registerLoading.value = false;
+  }
+};
+
+const handleLogout = async () => {
+  try {
+    const result = await authStore.logout();
+    
+    if (result.success) {
+      alert('已退出登录');
+    } else {
+      alert('退出失败：' + result.error);
+    }
+  } catch (error) {
+    console.error('退出失败:', error);
+    alert('退出失败：' + error.message);
+  }
+};
+
+// 组件挂载时获取数据和检查登录状态
 onMounted(() => {
-  fetchFeaturedPoems()
+  fetchFeaturedPoems();
+  authStore.checkAuthState();
+  authStore.setupAuthListener();
 })
 </script>
 

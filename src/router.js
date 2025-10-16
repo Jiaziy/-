@@ -7,6 +7,7 @@ import Collection from './views/Collection.vue'
 import Interactive from './views/Interactive.vue'
 import SupabaseTest from './views/SupabaseTest.vue'
 import CheckDatabase from './views/CheckDatabase.vue'
+import Profile from './views/Profile.vue'
 
 const routes = [
   {
@@ -52,6 +53,12 @@ const routes = [
     component: CheckDatabase
   },
   {
+    path: '/profile',
+    name: 'profile',
+    component: Profile,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/'
   }
@@ -60,6 +67,18 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  // 检查路由是否需要认证
+  if (to.meta.requiresAuth) {
+    // 这里可以添加认证检查逻辑
+    // 暂时直接放行，后续可以集成auth store
+    next()
+  } else {
+    next()
+  }
 })
 
 export default router

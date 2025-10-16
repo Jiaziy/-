@@ -8,6 +8,16 @@ const createMockSupabaseClient = () => {
   console.warn('Supabase环境变量未配置，使用模拟客户端')
   
   return {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      signUp: () => Promise.resolve({ data: null, error: new Error('Supabase环境变量未配置，无法注册') }),
+      signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase环境变量未配置，无法登录') }),
+      signOut: () => Promise.resolve({ error: null }),
+      onAuthStateChange: (callback) => {
+        // 模拟监听器
+        return { data: { subscription: { unsubscribe: () => {} } } }
+      }
+    },
     from: () => ({
       select: () => ({
         range: () => ({

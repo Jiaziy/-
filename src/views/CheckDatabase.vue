@@ -1,4 +1,4 @@
-<template>
+0<template>
   <div class="min-h-screen bg-gray-50 py-12 px-8">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-3xl font-bold mb-8">Supabase 数据库检查</h1>

@@ -88,9 +88,6 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import { useAuthStore } from '@/stores/auth.js'
-
-const authStore = useAuthStore()
 const isOpen = ref(false)
 const userInput = ref('')
 const messages = ref([])
@@ -126,6 +123,9 @@ const sendMessage = async () => {
   scrollToBottom()
 
   try {
+    // 生成匿名用户ID（基于浏览器指纹）
+    const anonymousUserId = generateAnonymousUserId()
+    
     // 调用n8n工作流
     const response = await fetch('https://your-n8n-instance.com/webhook/ai-assistant-webhook', {
       method: 'POST',
@@ -133,7 +133,7 @@ const sendMessage = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userId: authStore.user?.id || 'anonymous',
+        userId: anonymousUserId,
         message: userMessage,
         sessionId: generateSessionId()
       })
@@ -165,6 +165,20 @@ const sendMessage = async () => {
     isLoading.value = false
     scrollToBottom()
   }
+}
+
+// 生成匿名用户ID（基于浏览器指纹）
+const generateAnonymousUserId = () => {
+  // 尝试从localStorage获取已存在的匿名ID
+  let anonymousId = localStorage.getItem('anonymous_user_id')
+  
+  if (!anonymousId) {
+    // 生成新的匿名ID（基于时间戳和随机数）
+    anonymousId = `anonymous_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    localStorage.setItem('anonymous_user_id', anonymousId)
+  }
+  
+  return anonymousId
 }
 
 // 生成会话ID

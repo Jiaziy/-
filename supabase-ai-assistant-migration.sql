@@ -40,11 +40,12 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- 创建聊天会话表
 CREATE TABLE IF NOT EXISTS chat_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL, -- 修改为VARCHAR以支持匿名用户ID
     session_id VARCHAR(255) NOT NULL,
     user_message TEXT NOT NULL,
     ai_response TEXT NOT NULL,
     context JSONB DEFAULT '{}',
+    is_anonymous BOOLEAN DEFAULT FALSE, -- 添加匿名用户标识
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -96,9 +97,15 @@ CREATE POLICY "用户只能访问自己项目的任务" ON tasks
         AND projects.user_id = auth.uid()
     ));
 
--- 聊天会话策略
+-- 聊天会话策略（支持匿名用户）
 CREATE POLICY "用户只能访问自己的聊天记录" ON chat_sessions
-    FOR ALL USING (auth.uid() = user_id);
+    FOR ALL USING (
+        -- 认证用户：user_id等于当前用户ID
+        (auth.uid()::text = user_id) 
+        OR 
+        -- 匿名用户：user_id以'anonymous_'开头且没有认证用户
+        (user_id LIKE 'anonymous_%' AND auth.uid() IS NULL)
+    );
 
 -- 知识库项目策略
 CREATE POLICY "用户只能访问自己项目的知识库" ON knowledge_items

@@ -1,11 +1,13 @@
 <template>
   <div id="app">
     <router-view/>
+    <!-- AI助手组件 - 在所有页面显示 -->
+    <AIAssistant />
   </div>
 </template>
 
 <script setup>
-// App组件逻辑
+import AIAssistant from '@/components/AIAssistant.vue'
 </script>
 
 <style>

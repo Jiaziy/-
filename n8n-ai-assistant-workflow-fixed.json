@@ -1,0 +1,254 @@
+{
+  "name": "AI项目助手工作流",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "/webhook",
+        "responseMode": "responseNode"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "ai-assistant-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { userId, message, sessionId } = $input.first().json;\nif (!userId || !message) {\n  throw new Error('缺少必要参数: userId 或 message');\n}\nreturn {\n  userId: userId.trim(),\n  message: message.trim(),\n  sessionId: sessionId || `session_${Date.now()}`,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "2",
+      "name": "解析用户输入",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getRow",
+        "schema": "public",
+        "table": "users",
+        "getRowId": "={{ $json.userId }}"
+      },
+      "id": "3",
+      "name": "获取用户信息",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [680, 200],
+      "credentials": {
+        "postgres": "supabase-connection"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getRows",
+        "schema": "public",
+        "table": "projects",
+        "additionalFields": {
+          "whereClause": "user_id = {{ $json.userId }}"
+        }
+      },
+      "id": "4",
+      "name": "获取用户项目",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [680, 400],
+      "credentials": {
+        "postgres": "supabase-connection"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const userData = $input.all()[0].json;\nconst projectsData = $input.all()[1].json;\nconst context = {\n  user: {\n    id: userData.id,\n    name: userData.name,\n    email: userData.email,\n    preferences: userData.preferences || {}\n  },\n  projects: projectsData.map(project => ({\n    id: project.id,\n    name: project.name,\n    description: project.description,\n    status: project.status,\n    knowledgeBase: project.knowledge_base || [],\n    tasks: project.tasks || []\n  })),\n  currentSession: $input.first().json\n};\nreturn context;"
+      },
+      "id": "5",
+      "name": "构建上下文",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $input.first().json;\nconst responses = {\n  '你好': '您好！我是AI项目助手，很高兴为您服务。我可以帮您管理项目、查询任务和知识库。',\n  'hello': 'Hello! I am your AI project assistant. How can I help you today?',\n  '嗨': '嗨！有什么可以帮您的吗？',\n  '项目': '让我帮您查看项目信息...您可以说：查看我的项目、创建新项目、项目进度如何',\n  'project': 'I can help you with project management. You can ask: Show my projects, Create new project, Project status',\n  '任务': '您想了解哪个项目的任务？我可以帮您：查看待办任务、创建新任务、更新任务状态',\n  'task': 'Which project tasks would you like to see? I can help you: View pending tasks, Create new tasks, Update task status',\n  '知识库': '正在为您查询知识库内容...您可以说：搜索知识库、添加知识条目、学习资料',\n  'knowledge': 'Let me search the knowledge base for you. You can ask: Search knowledge, Add knowledge item, Learning materials',\n  '帮助': '我可以帮您：项目管理、任务跟踪、知识库查询、智能建议。请告诉我您需要什么帮助？',\n  'help': 'I can help you with: Project Management, Task Tracking, Knowledge Base, Smart Suggestions. What do you need help with?',\n  'default': `我已经收到您的消息：\"${context.currentSession.message}\"。目前我还在学习阶段，但我会尽力帮助您管理项目信息、跟踪任务进度、查询知识库内容、提供项目建议。您可以说：查看我的项目、创建新任务、知识库搜索、项目进度报告`\n};\nconst lowerMessage = context.currentSession.message.toLowerCase();\nlet response = responses.default;\nfor (const [key, value] of Object.entries(responses)) {\n  if (lowerMessage.includes(key.toLowerCase()) && key !== 'default') {\n    response = value;\n    break;\n  }\n}\nif (context.projects && context.projects.length > 0) {\n  response += `\\n\\n您当前有 ${context.projects.length} 个项目：`;\n  context.projects.slice(0, 3).forEach(project => {\n    response += `\\n• ${project.name} (${project.status})`;\n  });\n  if (context.projects.length > 3) {\n    response += `\\n• ...还有 ${context.projects.length - 3} 个项目`;\n  }\n}\nreturn {\n  success: true,\n  response: {\n    message: response,\n    sessionId: context.currentSession.sessionId,\n    timestamp: new Date().toISOString(),\n    context: {\n      userId: context.user.id,\n      projectCount: context.projects ? context.projects.length : 0\n    }\n  }\n};"
+      },
+      "id": "6",
+      "name": "模拟AI响应",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $input.first().json;\nreturn aiResponse;"
+      },
+      "id": "7",
+      "name": "处理AI响应",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1400, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insertRow",
+        "schema": "public",
+        "table": "chat_sessions",
+        "additionalFields": {
+          "columns": "user_id, session_id, user_message, ai_response, created_at"
+        },
+        "values": "={{ $json.user.id }}, {{ $json.response.sessionId }}, {{ $json.context.currentSession.message }}, {{ $json.response.message }}, {{ $json.response.timestamp }}"
+      },
+      "id": "8",
+      "name": "保存聊天记录",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1620, 300],
+      "credentials": {
+        "postgres": "supabase-connection"
+      }
+    },
+    {
+      "parameters": {
+        "mode": "lastNode"
+      },
+      "id": "9",
+      "name": "返回响应",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1840, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const error = $input.first().json;\nreturn {\n  success: false,\n  error: {\n    message: error.message || '处理请求时发生错误',\n    code: error.code || 'UNKNOWN_ERROR',\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "10",
+      "name": "错误处理",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "解析用户输入",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析用户输入": {
+      "main": [
+        [
+          {
+            "node": "获取用户信息",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "获取用户项目",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取用户信息": {
+      "main": [
+        [
+          {
+            "node": "构建上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取用户项目": {
+      "main": [
+        [
+          {
+            "node": "构建上下文",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "构建上下文": {
+      "main": [
+        [
+          {
+            "node": "模拟AI响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "模拟AI响应": {
+      "main": [
+        [
+          {
+            "node": "处理AI响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "错误处理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "处理AI响应": {
+      "main": [
+        [
+          {
+            "node": "保存聊天记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "保存聊天记录": {
+      "main": [
+        [
+          {
+            "node": "返回响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "错误处理": {
+      "main": [
+        [
+          {
+            "node": "返回响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

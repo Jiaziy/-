@@ -141,15 +141,36 @@ CREATE TRIGGER update_knowledge_items_updated_at
     BEFORE UPDATE ON knowledge_items 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 插入示例数据（可选）
-INSERT INTO user_profiles (user_id, name, email, preferences) 
-VALUES 
-    ('00000000-0000-0000-0000-000000000001', '示例用户', 'user@example.com', '{"theme": "light", "language": "zh-CN"}')
-ON CONFLICT (email) DO NOTHING;
+-- 插入示例数据（可选）- 使用条件插入避免外键约束错误
+DO $$ 
+BEGIN
+    -- 检查是否存在有效的用户ID
+    IF EXISTS (SELECT 1 FROM auth.users LIMIT 1) THEN
+        -- 使用第一个有效用户ID插入示例数据
+        INSERT INTO user_profiles (user_id, name, email, preferences) 
+        SELECT 
+            id, 
+            '示例用户', 
+            'user@example.com', 
+            '{"theme": "light", "language": "zh-CN"}'
+        FROM auth.users 
+        ORDER BY created_at 
+        LIMIT 1
+        ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO projects (user_id, name, description, knowledge_base) 
-VALUES 
-    ('00000000-0000-0000-0000-000000000001', '古诗词学习项目', '个人古诗词学习和鉴赏项目', '["唐诗", "宋词", "元曲"]')
-ON CONFLICT DO NOTHING;
+        INSERT INTO projects (user_id, name, description, knowledge_base) 
+        SELECT 
+            id,
+            '古诗词学习项目', 
+            '个人古诗词学习和鉴赏项目', 
+            '["唐诗", "宋词", "元曲"]'
+        FROM auth.users 
+        ORDER BY created_at 
+        LIMIT 1
+        ON CONFLICT DO NOTHING;
+    ELSE
+        RAISE NOTICE '没有找到有效用户，跳过示例数据插入';
+    END IF;
+END $$;
 
--- 注释：在实际使用时，需要将示例用户ID替换为真实的用户ID
+-- 注释：示例数据仅在存在有效用户时插入

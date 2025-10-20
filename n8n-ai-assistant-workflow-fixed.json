@@ -1,13 +1,15 @@
 {
-  "name": "AI项目助手工作流",
+  "name": "AI Project Assistant Workflow",
   "nodes": [
     {
       "parameters": {
-        "path": "/webhook",
-        "responseMode": "responseNode"
+        "path": "/webhook/ai-assistant",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
       },
-      "id": "1",
-      "name": "Webhook",
+      "id": "webhook-1",
+      "name": "AI Assistant Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [240, 300],
@@ -15,62 +17,334 @@
     },
     {
       "parameters": {
-        "jsCode": "// 增强调试和错误处理\nconsole.log('=== 解析用户输入节点开始执行 ===');\nconsole.log('完整输入对象:', JSON.stringify($input, null, 2));\n\n// 检查输入是否存在\nif (!$input || !$input.first) {\n  throw new Error('输入数据格式错误：$input 或 $input.first 不存在');\n}\n\nconst firstInput = $input.first();\nconsole.log('第一个输入项:', JSON.stringify(firstInput, null, 2));\n\n// 检查输入项是否包含json数据\nif (!firstInput || !firstInput.json) {\n  console.log('输入数据结构:', {\n    hasJson: !!firstInput?.json,\n    jsonType: typeof firstInput?.json,\n    jsonValue: firstInput?.json\n  });\n  throw new Error('输入数据格式错误：请确保请求包含有效的JSON数据，格式为 {\\\"userId\\\": \\\"...\\\", \\\"message\\\": \\\"...\\\"}');\n}\n\nconst inputData = firstInput.json;\nconsole.log('解析到的JSON数据:', JSON.stringify(inputData, null, 2));\n\n// 检查是否为有效对象\nif (typeof inputData !== 'object' || inputData === null) {\n  throw new Error('JSON数据格式错误：期望对象类型，实际为 ' + typeof inputData);\n}\n\n// 解构参数并提供默认值\nconst { \n  userId = '', \n  message = '', \n  sessionId = `session_${Date.now()}` \n} = inputData;\n\nconsole.log('解构后的参数:', { userId, message, sessionId });\n\n// 验证必要参数\nif (!userId && !message) {\n  throw new Error('缺少必要参数：userId 和 message 都未提供。请检查请求格式：{\\\"userId\\\": \\\"用户ID\\\", \\\"message\\\": \\\"消息内容\\\"}');\n}\n\nif (!userId) {\n  throw new Error('缺少必要参数：userId。请提供用户标识符');\n}\n\nif (!message) {\n  throw new Error('缺少必要参数：message。请提供消息内容');\n}\n\n// 参数清理和验证\nconst cleanedUserId = userId.toString().trim();\nconst cleanedMessage = message.toString().trim();\nconst cleanedSessionId = sessionId.toString().trim();\n\nif (!cleanedUserId) {\n  throw new Error('userId 参数无效：不能为空或只包含空白字符');\n}\n\nif (!cleanedMessage) {\n  throw new Error('message 参数无效：不能为空或只包含空白字符');\n}\n\nconsole.log('=== 参数验证通过 ===');\nconsole.log('清理后的参数:', { \n  userId: cleanedUserId, \n  message: cleanedMessage, \n  sessionId: cleanedSessionId \n});\n\n// 返回处理后的数据\nreturn {\n  userId: cleanedUserId,\n  message: cleanedMessage,\n  sessionId: cleanedSessionId,\n  timestamp: new Date().toISOString(),\n  _debug: {\n    inputReceived: !!$input.first(),\n    jsonParsed: !!inputData,\n    validationPassed: true\n  }\n};"
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "userId-check",
+              "leftValue": "={{ $json.userId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "id": "2",
-      "name": "解析用户输入",
-      "type": "n8n-nodes-base.code",
+      "id": "if-2",
+      "name": "Check User ID",
+      "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [480, 300]
     },
     {
       "parameters": {
-        "jsCode": "// 检查是否为匿名用户\nconst currentSession = $input.first().json;\nconst isAnonymousUser = currentSession.userId.startsWith('anonymous_');\n\nconsole.log('用户类型:', isAnonymousUser ? '匿名用户' : '认证用户');\nconsole.log('用户ID:', currentSession.userId);\n\nlet userData = {};\nlet projectsData = [];\n\nif (isAnonymousUser) {\n  // 匿名用户处理\n  userData = {\n    id: currentSession.userId,\n    name: '访客用户',\n    email: '',\n    preferences: {}\n  };\n  projectsData = [];\n} else {\n  // 认证用户处理\n  try {\n    userData = $input.all()[0].json;\n    projectsData = $input.all()[1].json;\n  } catch (error) {\n    console.log('数据库查询失败，使用默认数据:', error.message);\n    userData = {\n      id: currentSession.userId,\n      name: '用户',\n      email: '',\n      preferences: {}\n    };\n    projectsData = [];\n  }\n}\n\nconst context = {\n  user: {\n    id: userData.id,\n    name: userData.name,\n    email: userData.email,\n    preferences: userData.preferences || {}\n  },\n  projects: projectsData.map(project => ({\n    id: project.id,\n    name: project.name,\n    description: project.description,\n    status: project.status,\n    knowledgeBase: project.knowledge_base || [],\n    tasks: project.tasks || []\n  })),\n  currentSession: currentSession,\n  isAnonymous: isAnonymousUser\n};\n\nconsole.log('构建的上下文:', {\n  userId: context.user.id,\n  userName: context.user.name,\n  projectCount: context.projects.length,\n  isAnonymous: context.isAnonymous\n});\n\nreturn context;"
+        "functionCode": "const inputData = $input.first().json;\nif (!inputData.userId || !inputData.message) {\n  throw new Error('Missing required fields: userId and message');\n}\nconst processedData = {\n  userId: inputData.userId.toString().trim(),\n  message: inputData.message.toString().trim(),\n  sessionId: inputData.sessionId ? inputData.sessionId.toString().trim() : `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n  timestamp: new Date().toISOString(),\n  context: inputData.context || {}\n};\nreturn [processedData];"
       },
-      "id": "3",
-      "name": "构建上下文",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [680, 300]
+      "id": "function-3",
+      "name": "Parse User Input",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [720, 300]
     },
     {
       "parameters": {
-        "jsCode": "const context = $input.first().json;\nconst isAnonymous = context.isAnonymous;\n\nconsole.log('AI响应 - 用户类型:', isAnonymous ? '匿名用户' : '认证用户');\n\n// 根据用户类型提供不同的响应\nconst responses = {\n  '你好': isAnonymous ? \n    '您好！欢迎使用AI助手。我是您的智能助手，可以帮您解答问题、提供信息。请问有什么可以帮您的吗？' :\n    '您好！我是AI项目助手，很高兴为您服务。我可以帮您管理项目、查询任务和知识库。',\n  'hello': isAnonymous ?\n    'Hello! Welcome to AI Assistant. I can help answer your questions and provide information. How can I assist you today?' :\n    'Hello! I am your AI project assistant. How can I help you today?',\n  '嗨': isAnonymous ?\n    '嗨！欢迎使用AI助手，有什么可以帮您的吗？' :\n    '嗨！有什么可以帮您的吗？',\n  '项目': isAnonymous ?\n    '我是通用AI助手，可以帮您解答各种问题。如果您需要项目管理功能，建议您登录账户以获得完整功能。' :\n    '让我帮您查看项目信息...您可以说：查看我的项目、创建新项目、项目进度如何',\n  'project': isAnonymous ?\n    'I am a general AI assistant. For project management features, please log in to access full functionality.' :\n    'I can help you with project management. You can ask: Show my projects, Create new project, Project status',\n  '任务': isAnonymous ?\n    '我可以帮您解答各种问题。如需任务管理功能，建议登录账户使用完整功能。' :\n    '您想了解哪个项目的任务？我可以帮您：查看待办任务、创建新任务、更新任务状态',\n  'task': isAnonymous ?\n    'I can help answer your questions. For task management features, please log in.' :\n    'Which project tasks would you like to see? I can help you: View pending tasks, Create new tasks, Update task status',\n  '知识库': isAnonymous ?\n    '我可以为您提供信息和解答问题。如需访问知识库，建议登录账户。' :\n    '正在为您查询知识库内容...您可以说：搜索知识库、添加知识条目、学习资料',\n  'knowledge': isAnonymous ?\n    'I can provide information and answer questions. For knowledge base access, please log in.' :\n    'Let me search the knowledge base for you. You can ask: Search knowledge, Add knowledge item, Learning materials',\n  '帮助': isAnonymous ?\n    '我可以帮您：解答问题、提供信息、简单咨询。如需项目管理等高级功能，建议登录账户。' :\n    '我可以帮您：项目管理、任务跟踪、知识库查询、智能建议。请告诉我您需要什么帮助？',\n  'help': isAnonymous ?\n    'I can help you: Answer questions, Provide information, General consultation. For advanced features like project management, please log in.' :\n    'I can help you with: Project Management, Task Tracking, Knowledge Base, Smart Suggestions. What do you need help with?',\n  'default': isAnonymous ?\n    `我已经收到您的消息：\"${context.currentSession.message}\"。作为AI助手，我可以帮您解答问题、提供信息。如果您需要项目管理等高级功能，建议登录账户以获得完整体验。` :\n    `我已经收到您的消息：\"${context.currentSession.message}\"。目前我还在学习阶段，但我会尽力帮助您管理项目信息、跟踪任务进度、查询知识库内容、提供项目建议。您可以说：查看我的项目、创建新任务、知识库搜索、项目进度报告`\n};\n\nconst lowerMessage = context.currentSession.message.toLowerCase();\nlet response = responses.default;\n\nfor (const [key, value] of Object.entries(responses)) {\n  if (lowerMessage.includes(key.toLowerCase()) && key !== 'default') {\n    response = value;\n    break;\n  }\n}\n\n// 为认证用户添加项目信息\nif (!isAnonymous && context.projects && context.projects.length > 0) {\n  response += `\\n\\n您当前有 ${context.projects.length} 个项目：`;\n  context.projects.slice(0, 3).forEach(project => {\n    response += `\\n• ${project.name} (${project.status})`;\n  });\n  if (context.projects.length > 3) {\n    response += `\\n• ...还有 ${context.projects.length - 3} 个项目`;\n  }\n}\n\n// 为匿名用户添加登录提示\nif (isAnonymous && (lowerMessage.includes('项目') || lowerMessage.includes('任务') || lowerMessage.includes('知识库'))) {\n  response += '\\n\\n💡 提示：登录账户可以解锁完整功能，包括项目管理、任务跟踪等。';\n}\n\nreturn {\n  success: true,\n  response: {\n    message: response,\n    sessionId: context.currentSession.sessionId,\n    timestamp: new Date().toISOString(),\n    context: {\n      userId: context.user.id,\n      projectCount: context.projects ? context.projects.length : 0,\n      isAnonymous: isAnonymous\n    }\n  }\n};"
+        "functionCode": "const session = $input.first().json;\nconst isAnonymous = session.userId.startsWith('anonymous_');\nconst context = {\n  user: {\n    id: session.userId,\n    type: isAnonymous ? 'anonymous' : 'authenticated',\n    name: isAnonymous ? 'Guest User' : 'Authenticated User',\n    isAnonymous: isAnonymous\n  },\n  session: {\n    id: session.sessionId,\n    timestamp: session.timestamp\n  },\n  message: session.message,\n  intent: analyzeIntent(session.message)\n};\nfunction analyzeIntent(message) {\n  const lowerMessage = message.toLowerCase();\n  if (lowerMessage.includes('project')) return 'project_management';\n  if (lowerMessage.includes('task') || lowerMessage.includes('todo')) return 'task_management';\n  if (lowerMessage.includes('knowledge') || lowerMessage.includes('learn')) return 'knowledge_query';\n  if (lowerMessage.includes('help')) return 'help_request';\n  if (lowerMessage.includes('create') || lowerMessage.includes('add')) return 'create_request';\n  if (lowerMessage.includes('query') || lowerMessage.includes('search')) return 'query_request';\n  return 'general_conversation';\n}\nreturn [context];"
       },
-      "id": "4",
-      "name": "模拟AI响应",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [920, 300]
+      "id": "function-4",
+      "name": "Build User Context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [960, 300]
     },
     {
       "parameters": {
-        "jsCode": "const aiResponse = $input.first().json;\nreturn aiResponse;"
+        "url": "{{ $env.SUPABASE_URL }}/rest/v1/projects?user_id=eq.{{ $json.user.id }}&select=*",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "5",
-      "name": "处理AI响应",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1160, 300]
+      "id": "http-5",
+      "name": "Fetch User Projects",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1200, 200]
     },
     {
       "parameters": {
-        "operation": "insertRow",
-        "schema": "public",
-        "table": "chat_sessions",
-        "additionalFields": {\n          "columns": "user_id, session_id, user_message, ai_response, created_at, is_anonymous"\n        },\n        "values": "={{ $json.user.id }}, {{ $json.response.sessionId }}, {{ $json.context.currentSession.message }}, {{ $json.response.message }}, {{ $json.response.timestamp }}, {{ $json.response.context.isAnonymous }}"
+        "url": "{{ $env.SUPABASE_URL }}/rest/v1/chat_sessions?user_id=eq.{{ $json.user.id }}&order=created_at.desc&limit=10&select=*",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "6",
-      "name": "保存聊天记录",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2,
-      "position": [1400, 300],
-      "credentials": {\n        "postgres": "supabase-connection"\n      }
+      "id": "http-6",
+      "name": "Fetch Chat History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1200, 400]
     },
     {
-      "parameters": {\n        "mode": "lastNode"\n      },\n      "id": "7",
-      "name": "返回响应",
+      "parameters": {
+        "functionCode": "const context = $input.first().json;\nconst projectsResponse = $input.all()[1];\nconst chatHistoryResponse = $input.all()[2];\nlet projects = [];\nif (projectsResponse && projectsResponse.json) {\n  projects = Array.isArray(projectsResponse.json) ? projectsResponse.json : [projectsResponse.json];\n}\nlet chatHistory = [];\nif (chatHistoryResponse && chatHistoryResponse.json) {\n  chatHistory = Array.isArray(chatHistoryResponse.json) ? chatHistoryResponse.json : [chatHistoryResponse.json];\n}\nconst enhancedContext = {\n  ...context,\n  data: {\n    projects: projects,\n    chatHistory: chatHistory.slice(0, 5),\n    projectCount: projects.length,\n    hasProjects: projects.length > 0\n  }\n};\nreturn [enhancedContext];"
+      },
+      "id": "function-7",
+      "name": "Process Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const context = $input.first().json;\nlet responseMessage = '';\nswitch (context.intent) {\n  case 'project_management':\n    if (context.data.projects.length === 0) {\n      responseMessage = \"您目前还没有创建任何项目。我可以帮您：\\\\n• 创建新项目\\\\n• 了解如何开始项目管理\\\\n\\\\n您想创建第一个项目吗？\";\n    } else {\n      responseMessage = `您有 ${context.data.projects.length} 个项目。我可以帮您管理这些项目。`;\n    }\n    break;\n  case 'task_management':\n    responseMessage = \"我可以帮您管理任务。请告诉我您想操作哪个项目的任务？\";\n    break;\n  case 'knowledge_query':\n    responseMessage = \"我可以帮您查询知识库。您想查询哪个项目的知识库？\";\n    break;\n  case 'help_request':\n    responseMessage = \"我是您的AI项目助手，我可以帮您：\\\\n\\\\n📁 项目管理\\\\n✅ 任务管理\\\\n📚 知识库查询\\\\n💡 学习建议\\\\n\\\\n请告诉我您需要什么帮助？\";\n    break;\n  default:\n    responseMessage = `您好！我是您的AI项目助手。${context.data.hasProjects ? `我看到您有 ${context.data.projectCount} 个项目。` : '您还没有创建项目。'} 有什么可以帮您的吗？`;\n}\nconst response = {\n  success: true,\n  response: {\n    message: responseMessage,\n    sessionId: context.session.id,\n    timestamp: new Date().toISOString(),\n    context: {\n      intent: context.intent,\n      hasProjects: context.data.hasProjects,\n      projectCount: context.data.projectCount\n    }\n  }\n};\nreturn [response];"
+      },
+      "id": "function-8",
+      "name": "Generate AI Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1680, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.SUPABASE_URL }}/rest/v1/chat_sessions",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "user_id",
+              "value": "={{ $json.context.user.id }}"
+            },
+            {
+              "name": "session_id",
+              "value": "={{ $json.response.sessionId }}"
+            },
+            {
+              "name": "user_message",
+              "value": "={{ $json.context.message }}"
+            },
+            {
+              "name": "ai_response",
+              "value": "={{ $json.response.message }}"
+            },
+            {
+              "name": "context",
+              "value": "={{ $json.response.context }}"
+            },
+            {
+              "name": "is_anonymous",
+              "value": "={{ $json.context.user.isAnonymous }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-9",
+      "name": "Save Chat History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1920, 300]
+    },
+    {
+      "parameters": {
+        "mode": "lastNode"
+      },
+      "id": "noop-10",
+      "name": "Return Response",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [1620, 300]
-    },\n    {\n      "parameters": {\n        "jsCode": "const error = $input.first().json;\\nreturn {\\n  success: false,\\n  error: {\\n    message: error.message || '处理请求时发生错误',\\n    code: error.code || 'UNKNOWN_ERROR',\\n    timestamp: new Date().toISOString()\\n  }\\n};"\n      },\n      "id": "8",\n      "name": "错误处理",\n      "type": "n8n-nodes-base.code",\n      "typeVersion": 2,\n      "position": [920, 500]\n    }\n  ],\n  "connections": {\n    "Webhook": {\n      "main": [\n        [\n          {\n            "node": "解析用户输入",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "解析用户输入": {\n      "main": [\n        [\n          {\n            "node": "构建上下文",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "构建上下文": {\n      "main": [\n        [\n          {\n            "node": "模拟AI响应",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "模拟AI响应": {\n      "main": [\n        [\n          {\n            "node": "处理AI响应",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ],\n      "error": [\n        [\n          {\n            "node": "错误处理",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "处理AI响应": {\n      "main": [\n        [\n          {\n            "node": "保存聊天记录",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "保存聊天记录": {\n      "main": [\n        [\n          {\n            "node": "返回响应",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    },\n    "错误处理": {\n      "main": [\n        [\n          {\n            "node": "返回响应",\n            "type": "main",\n            "index": 0\n          }\n        ]\n      ]\n    }\n  },\n  "pinData": {},\n  "settings": {\n    "executionOrder": "v1"\n  },\n  "staticData": null,\n  "tags": [],\n  "triggerCount": 0,\n  "updatedAt": "2024-01-01T00:00:00.000Z",\n  "versionId": "1"\n}
+      "position": [2160, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const errorResponse = {\n  success: false,\n  error: {\n    code: \"MISSING_USER_ID\",\n    message: \"用户ID不能为空\",\n    details: \"请提供有效的用户ID以继续使用AI助手服务\"\n  }\n};\nreturn [errorResponse];"
+      },
+      "id": "function-11",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [480, 500]
+    }
+  ],
+  "connections": {
+    "AI Assistant Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check User ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check User ID": {
+      "main": [
+        [
+          {
+            "node": "Parse User Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse User Input": {
+      "main": [
+        [
+          {
+            "node": "Build User Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build User Context": {
+      "main": [
+        [
+          {
+            "node": "Fetch User Projects",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Chat History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch User Projects": {
+      "main": [
+        [
+          {
+            "node": "Process Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Chat History": {
+      "main": [
+        [
+          {
+            "node": "Process Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Data": {
+      "main": [
+        [
+          {
+            "node": "Generate AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate AI Response": {
+      "main": [
+        [
+          {
+            "node": "Save Chat History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Chat History": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Response": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

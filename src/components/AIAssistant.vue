@@ -127,7 +127,7 @@ const sendMessage = async () => {
     const anonymousUserId = generateAnonymousUserId()
     
     // 调用n8n工作流
-    const response = await fetch('https://your-n8n-instance.com/webhook/ai-assistant-webhook', {
+    const response = await fetch('http://localhost:5678/webhook/ai-assistant', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
